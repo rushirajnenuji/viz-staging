@@ -51,7 +51,7 @@ class TileStager:
         self.config = ConfigManager(config)
         self.tiles = TilePathManager(**self.config.get_path_manager_config())
 
-        self.logger = self.config.get_logger("TileStager")
+        self.logger = self.config.get_logger()
 
         if check_footprints and self.config.get("deduplicate_method") == "footprints":
             self.logger.info("Checking for footprint files...")
