@@ -19,9 +19,10 @@ import os
 
 import geopandas as gpd
 import pandas as pd
-from pdgstaging.TileStager import TileStager
 import parsl
 from parsl import python_app
+
+from pdgstaging.TileStager import TileStager
 
 
 def filter_gdf(gdf, filter_dict):
@@ -37,8 +38,7 @@ def filter_gdf(gdf, filter_dict):
     -------
     gdf : GeoPandas object
     """
-    return gdf.loc[(gdf[list(filter_dict)] ==
-                   pd.Series(filter_dict)).all(axis=1)]
+    return gdf.loc[(gdf[list(filter_dict)] == pd.Series(filter_dict)).all(axis=1)]
 
 
 def remove_columns(gdf, columns):
@@ -80,8 +80,8 @@ def prepare_for_archiving(path, stager):
     if isinstance(stager, (dict, str)):
         stager = TileStager(stager)
     config = stager.config
-    prop_centroid_within_tile = config.polygon_prop('centroid_within_tile')
-    prop_tile = stager.config.polygon_prop('tile')
+    prop_centroid_within_tile = config.polygon_prop("centroid_within_tile")
+    prop_tile = stager.config.polygon_prop("tile")
     gdf = filter_gdf(gdf, {prop_centroid_within_tile: True})
     gdf = remove_columns(gdf, [prop_centroid_within_tile, prop_tile])
     return gdf
@@ -115,9 +115,9 @@ def archive_vector_tile(path, stager, archive_dir, ext=None):
     if ext is None:
         ext = os.path.splitext(path)[1]
     path_manager = stager.tiles
-    if 'archive' not in path_manager.base_dirs:
-        path_manager.add_base_dir('archive', archive_dir, ext)
-    out_path = path_manager.path_from_tile(tile=path, base_dir='archive')
+    if "archive" not in path_manager.base_dirs:
+        path_manager.add_base_dir("archive", archive_dir, ext)
+    out_path = path_manager.path_from_tile(tile=path, base_dir="archive")
     gdf = prepare_for_archiving(path, stager)
     # mk di
     stager.tiles.create_dirs(out_path)
@@ -179,7 +179,7 @@ def archive_all_vector_tiles(stager, archive_dir, ext=None):
     if isinstance(stager, (dict, str)):
         stager = TileStager(stager)
     path_manager = stager.tiles
-    paths = path_manager.get_filenames_from_dir('staged')
+    paths = path_manager.get_filenames_from_dir("staged")
     return archive_vector_tiles(paths, stager, archive_dir, ext)
 
 
@@ -211,9 +211,9 @@ def archive_vector_tile_parsl(path, stager, archive_dir, ext=None):
     if ext is None:
         ext = os.path.splitext(path)[1]
     path_manager = stager.tiles
-    if 'archive' not in path_manager.base_dirs:
-        path_manager.add_base_dir('archive', archive_dir, ext)
-    out_path = path_manager.path_from_tile(tile=path, base_dir='archive')
+    if "archive" not in path_manager.base_dirs:
+        path_manager.add_base_dir("archive", archive_dir, ext)
+    out_path = path_manager.path_from_tile(tile=path, base_dir="archive")
     gdf = prepare_for_archiving(path, stager)
     stager.tiles.create_dirs(out_path)
     gdf.to_file(out_path)
@@ -221,8 +221,8 @@ def archive_vector_tile_parsl(path, stager, archive_dir, ext=None):
     # prepare for archiving
     gdf = gpd.read_file(path)
     config = stager.config
-    prop_centroid_within_tile = config.polygon_prop('centroid_within_tile')
-    prop_tile = stager.config.polygon_prop('tile')
+    prop_centroid_within_tile = config.polygon_prop("centroid_within_tile")
+    prop_tile = stager.config.polygon_prop("tile")
     gdf = filter_gdf(gdf, {prop_centroid_within_tile: True})
     gdf = remove_columns(gdf, [prop_centroid_within_tile, prop_tile])
 
@@ -286,6 +286,6 @@ def archive_all_vector_tiles_parsl(stager, archive_dir, ext=None):
     if isinstance(stager, (dict, str)):
         stager = TileStager(stager)
     path_manager = stager.tiles
-    paths = path_manager.get_filenames_from_dir('staged')
+    paths = path_manager.get_filenames_from_dir("staged")
     config = stager.config.input_config
     return archive_vector_tiles_parsl(paths, config, archive_dir, ext)
