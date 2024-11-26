@@ -9,7 +9,7 @@ RUN apt-get update \
 WORKDIR /app
 
 # Install pdgstaging from GitHub repo
-RUN pip install git+https://github.com/rushirajnenuji/staging.git
+RUN pip install git+https://github.com/rushirajnenuji/viz-staging.git
 
 # Set the default command (optional, useful for debugging)
 CMD ["python3"]

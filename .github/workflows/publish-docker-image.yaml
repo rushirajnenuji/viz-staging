@@ -11,7 +11,7 @@ on:
 
 env:
   REGISTRY: "ghcr.io"
-  IMAGE_NAME: "${{ github.repository_owner }}/vizstaging"
+  IMAGE_NAME: "${{ github.repository_owner }}/viz-staging"
   IMAGE_TAG: "${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}"
 
 
