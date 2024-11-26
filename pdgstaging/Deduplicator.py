@@ -1,22 +1,11 @@
 import itertools
-import logging
 import operator
-import os
 import uuid
 import warnings
-from datetime import datetime
 
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 from filelock import FileLock
-
-from . import logging_config
-
-# NOTE: DO NOT IMPORT ConfigManager, TilePathManager, Grid
-# because causes config import error for rasterization step
-
-logger = logging_config.logger
 
 
 def keep_rules_to_sort_order(keep_rules):
@@ -121,6 +110,7 @@ def deduplicate_neighbors(
     distance_crs="EPSG:3857",
     return_intersections=False,
     prop_duplicated="staging_duplicated",
+    logger=None,
     # defaults to these options only if aren't already specified in config
 ):
     """
@@ -440,6 +430,7 @@ def deduplicate_by_footprint(
     keep_rules=[],
     return_intersections=False,
     prop_duplicated="staging_duplicated",
+    logger=None,
     # defaults to these options only if aren't already specified in config
 ):
     """
@@ -655,7 +646,7 @@ def deduplicate_by_footprint(
     return to_return
 
 
-def label_duplicates(deduplicate_output, prop_duplicated):
+def label_duplicates(deduplicate_output, prop_duplicated, logger=None):
     """Recombine the keep & removed GDFs and mark the removed as duplicates
 
     Parameters
