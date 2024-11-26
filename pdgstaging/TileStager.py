@@ -9,7 +9,7 @@ import pandas as pd
 from filelock import FileLock
 
 from . import ConfigManager, TilePathManager, TMSGrid
-from .Deduplicator import clip_gdf
+from .Deduplicator import clip_gdf, deduplicate_by_footprint, deduplicate_neighbors
 
 
 class TileStager:
@@ -471,7 +471,14 @@ class TileStager:
             tile_strings = data[self.props["centroid_tile"]].astype("str")
             data[self.props["centroid_tile"]] = tile_strings
 
-            dedup_method = self.config.get_deduplication_method()
+            dedup_algo = self.config.get_deduplication_method()
+            if dedup_algo is not None and dedup_algo == "footprints":
+                dedup_method = deduplicate_by_footprint
+            elif dedup_algo is not None and dedup_algo == "neighbors":
+                dedup_method = deduplicate_neighbors
+            else:
+                dedup_method = None
+
             if os.path.isfile(tile_path):
                 if dedup_method is not None:
                     # If the file exists and config is set to deduplicate
@@ -486,7 +493,7 @@ class TileStager:
                         f"Tile exists and dedup is set to occur at some step,"
                         f" so executing `combine_and_deduplicate()`"
                     )
-                    data = self.combine_and_deduplicate(data, tile_path)
+                    data = self.combine_and_deduplicate(data, tile_path, dedup_method)
 
                     mode = "w"
                     # Overwrite existing file.
@@ -675,7 +682,7 @@ class TileStager:
             self.logger.info(f"Saved {tile_path} in {datetime.now() - start_time}")
             self.__release_file(lock)
 
-    def combine_and_deduplicate(self, gdf, tile_path):
+    def combine_and_deduplicate(self, gdf, tile_path, dedup_method):
         """
         Combine existing data for a tile with the new data in a
         GeoDataFrame, label polygons as duplicates using one of
@@ -698,7 +705,6 @@ class TileStager:
 
         dedup_start_time = datetime.now()
 
-        dedup_method = self.config.get_deduplication_method()
         existing_gdf = gpd.read_file(tile_path)
 
         # Projection info can be lost during saving & reopening geopackage
