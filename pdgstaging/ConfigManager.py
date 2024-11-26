@@ -6,12 +6,8 @@ import warnings
 import colormaps as cmaps
 from coloraide import Color
 
-from . import logging_config
 from .Deduplicator import deduplicate_by_footprint, deduplicate_neighbors
 from .TilePathManager import TilePathManager
-
-logger = logging_config.logger
-
 
 class ConfigManager:
     """
@@ -65,6 +61,8 @@ class ConfigManager:
             automatically if the config is passed as a path string. When
             the config is updated, it will be saved to this filename, but
             with a suffix indicating that it is an updated.
+        - filename_logger : str
+            The path and filename to save the log file to.
 
     - Filetypes for input and output data.
         - ext_input : str
@@ -322,6 +320,7 @@ class ConfigManager:
         "dir_staged": "/path/to/staged/dir",
         "dir_input": "/path/to/input/dir",
         "filename_staging_summary": "staging_summary.csv",
+        "filename_logger": "ogdc.log",
         "ext_web_tiles": ".png",
         "ext_input": ".shp",
         "ext_staged": ".gpkg",
@@ -366,6 +365,7 @@ class ConfigManager:
         "filename_rasterization_events": "rasterization_events.csv",
         "filename_rasters_summary": "rasters_summary.csv",
         "filename_config": "config.json",
+        "filename_logger": "ogdc.log",
         # File types for input and output
         "ext_web_tiles": ".png",
         "ext_input": ".shp",
@@ -465,6 +465,8 @@ class ConfigManager:
         self.original_config = self.config.copy()
 
         self.tiles = TilePathManager(**self.get_path_manager_config())
+
+        self.set_logger(self.config["filename_logger"])
 
         # Make a shortcut to the property names
         self.props = {}
@@ -1259,7 +1261,7 @@ class ConfigManager:
                 try:
                     footprints[f] = self.footprint_path_from_input(f, check_exists=True)
                 except FileNotFoundError:
-                    logger.warning(
+                    self.logger.warning(
                         f"No footprint files found for file {f}. "
                         "Deduplication will not be performed for this file."
                     )
@@ -1339,10 +1341,10 @@ class ConfigManager:
         path = os.path.join(dir_footprints, path + ext_footprints)
         if check_exists:
             if os.path.exists(path):
-                logger.info(f"Successfully found footprint file: {path}")
+                self.logger.info(f"Successfully found footprint file: {path}")
                 return path
             else:
-                logger.info(f"Failed to find footprint file: {path}")
+                self.logger.info(f"Failed to find footprint file: {path}")
                 raise FileNotFoundError(path)
         else:
             return path
@@ -1451,3 +1453,36 @@ class ConfigManager:
         rgb_vals = (cmap.discrete(pal_len).colors * 255).astype(int).tolist()
         rgb_hex = [f"#{i:02x}{j:02x}{k:02x}" for i, j, k in rgb_vals]
         return rgb_hex
+    
+
+    def set_logger(self, log_file=None):
+        """
+        Set the logger for the config object
+
+        Parameters
+        ----------
+        logger : logging.Logger
+            The logger to set.
+        """
+        # configure logger
+        self.logger = logging.getLogger("logger")
+        # prevent logging statements from being printed to terminal
+        self.logger.propagate = False
+        # set up new handler
+        handler = logging.FileHandler(log_file)
+        formatter = logging.Formatter(logging.BASIC_FORMAT)
+        handler.setFormatter(formatter)
+        self.logger.addHandler(handler)
+        self.logger.setLevel(logging.INFO)
+
+
+    def get_logger(self):
+        """
+        Get the logger for the config object
+
+        Returns
+        -------
+        logging.Logger
+            The logger.
+        """
+        return self.logger
